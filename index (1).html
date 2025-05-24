@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrera Geométrica con Cronómetro 🏁</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      overflow-x: hidden;
+      background: #87CEEB;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 15px;
+      color: #fff;
+      background: #333;
+      margin: 0;
+    }
+
+    #landscape {
+      background: linear-gradient(#87CEEB, #228B22);
+      height: 100px;
+      position: relative;
+    }
+
+    .mountain {
+      position: absolute;
+      bottom: 0;
+      width: 0;
+      height: 0;
+      border-left: 60px solid transparent;
+      border-right: 60px solid transparent;
+      border-bottom: 80px solid #556B2F;
+    }
+
+    .mountain:nth-child(1) { left: 50px; }
+    .mountain:nth-child(2) { left: 200px; }
+    .mountain:nth-child(3) { left: 350px; }
+
+    #track {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      background: #444;
+      overflow: hidden;
+      border-top: 10px solid #333;
+      border-bottom: 10px solid #333;
+    }
+
+    .line {
+      position: absolute;
+      width: 100%;
+      height: 5px;
+      background: #fff;
+      top: 60px;
+    }
+
+    .car {
+      position: absolute;
+      width: 50px;
+      height: 30px;
+      border-radius: 5px;
+      text-align: center;
+      line-height: 30px;
+      color: #000;
+      font-weight: bold;
+    }
+
+    #car1 { background: limegreen; top: 30px; }
+    #car2 { background: blue;      top: 80px; }
+    #car3 { background: red;       top: 130px; }
+    #car4 { background: yellow;    top: 180px; }
+
+    #questionBox {
+      background: #333;
+      padding: 20px;
+      margin: 20px auto;
+      border: 2px solid #999;
+      max-width: 600px;
+      color: white;
+      border-radius: 8px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      background: #03a9f4;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0288d1;
+    }
+
+    #timer {
+      font-size: 24px;
+      text-align: center;
+      margin-top: 10px;
+      color: #fff;
+    }
+
+  </style>
+</head>
+<body>
+
+  <h1>🏎️ Carrera Geométrica con Cronómetro 🏁</h1>
+
+  <div id="landscape">
+    <div class="mountain"></div>
+    <div class="mountain"></div>
+    <div class="mountain"></div>
+  </div>
+
+  <div id="track">
+    <div class="line"></div>
+    <div class="line" style="top:110px"></div>
+    <div class="line" style="top:160px"></div>
+    <div id="car1" class="car">Tú</div>
+    <div id="car2" class="car">CPU 1</div>
+    <div id="car3" class="car">CPU 2</div>
+    <div id="car4" class="car">CPU 3</div>
+  </div>
+
+  <div id="timer">⏳ 15</div>
+
+  <div id="questionBox">
+    <p id="questionText"></p>
+    <div id="options"></div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        q: "¿Qué característica principal te permite identificar un cuadrado?",
+        options: ["Tiene cuatro lados.", "Todos sus lados son iguales y todos sus ángulos son rectos.", "Es una figura que se puede dibujar."],
+        answer: "Todos sus lados son iguales y todos sus ángulos son rectos."
+      },
+      {
+        q: "Si te muestro un triángulo y te pregunto '¿Es este un triángulo isósceles?', ¿en qué te fijarías para responder?",
+        options: ["En que tenga tres lados.", "En si dos de sus lados miden lo mismo.", "En el color del triángulo."],
+        answer: "En si dos de sus lados miden lo mismo."
+      },
+      {
+        q: "Observa un cubo. ¿Qué puedes decir sobre sus caras?",
+        options: ["Son líneas.", "Son todas cuadrados iguales.", "Son diferentes figuras."],
+        answer: "Son todas cuadrados iguales."
+      },
+      {
+        q: "Si comparas un cubo con una pirámide, ¿cuál es una diferencia clara que notas entre ellos?",
+        options: ["Ambos tienen punta.", "El cubo tiene todas sus caras planas y la pirámide termina en un vértice.", "Uno es grande y el otro es pequeño."],
+        answer: "El cubo tiene todas sus caras planas y la pirámide termina en un vértice."
+      },
+      {
+        q: "¿Qué tienen en común un cono y un cilindro que no tienen un cubo o una pirámide?",
+        options: ["Ambos son de color blanco.", "Ambos pueden rodar y tienen al menos una superficie curva.", "Ambos tienen una base circular."],
+        answer: "Ambos pueden rodar y tienen al menos una superficie curva."
+      },
+      {
+        q: "Si tienes una esfera en la mano, ¿qué la hace diferente de cualquier otra figura que hemos visto?",
+        options: ["Es redonda.", "No tiene vértices ni aristas, y toda su superficie es curva.", "Puedes hacerla rebotar."],
+        answer: "No tiene vértices ni aristas, y toda su superficie es curva."
+      }
+    ];
+
+    let car1Pos = 0, car2Pos = 0, car3Pos = 0, car4Pos = 0;
+    let currentQuestion = 0;
+    let timer;
+    let timeLeft = 15;
+
+    const car1 = document.getElementById("car1");
+    const car2 = document.getElementById("car2");
+    const car3 = document.getElementById("car3");
+    const car4 = document.getElementById("car4");
+    const questionText = document.getElementById("questionText");
+    const optionsDiv = document.getElementById("options");
+    const timerDiv = document.getElementById("timer");
+
+    function showQuestion() {
+      if (currentQuestion >= questions.length) {
+        if (car1Pos >= 800) {
+          alert("🏆 ¡Ganaste la carrera!");
+        } else {
+          alert("🚗 ¡Perdiste la carrera!");
+        }
+        location.reload();
+        return;
+      }
+
+      const q = questions[currentQuestion];
+      questionText.textContent = q.q;
+      optionsDiv.innerHTML = "";
+      timeLeft = 15;
+      updateTimer();
+      clearInterval(timer);
+      timer = setInterval(countDown, 1000);
+
+      q.options.forEach(option => {
+        const btn = document.createElement("button");
+        btn.textContent = option;
+        btn.onclick = () => {
+          clearInterval(timer);
+          if (option === q.answer) {
+            car1Pos += 100;
+            car1.style.left = car1Pos + "px";
+          } else {
+            moveOthers();
+          }
+          checkWin();
+          currentQuestion++;
+          showQuestion();
+        };
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function countDown() {
+      timeLeft--;
+      updateTimer();
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        moveOthers();
+        checkWin();
+        currentQuestion++;
+        showQuestion();
+      }
+    }
+
+    function updateTimer() {
+      timerDiv.textContent = `⏳ ${timeLeft}`;
+    }
+
+    function moveOthers() {
+      car2Pos += 50;
+      car3Pos += 50;
+      car4Pos += 50;
+      car2.style.left = car2Pos + "px";
+      car3.style.left = car3Pos + "px";
+      car4.style.left = car4Pos + "px";
+    }
+
+    function checkWin() {
+      if (car1Pos >= 800) {
+        alert("🏆 ¡Ganaste la carrera!");
+        location.reload();
+      }
+      if (car2Pos >= 800 || car3Pos >= 800 || car4Pos >= 800) {
+        alert("🚗 ¡Perdiste la carrera!");
+        location.reload();
+      }
+    }
+
+    showQuestion();
+  </script>
+
+</body>
+</html>
+
+
+
+
